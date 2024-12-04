@@ -60,3 +60,7 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+firmware/hw_layer/mass_storage/ramdisk_image.h
+firmware/hw_layer/mass_storage/ramdisk_image_compressed.h
+firmware/config/boards/microrusefi/connectors/generated_ts_name_by_pin.cpp
+firmware/tunerstudio/generated/fome_balefi.ini
