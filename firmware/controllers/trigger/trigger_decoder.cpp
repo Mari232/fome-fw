@@ -64,11 +64,11 @@ void TriggerDecoderBase::resetState() {
 	setArrayValues(toothDurations, 0);
 
 	crankSynchronizationCounter = 0;
-	totalTriggerErrorCounter = 0;
+	triggerErrorCounter = 0;
 	orderingErrorCounter = 0;
 	m_timeSinceDecodeError.init();
 
-	prevSignal = SHAFT_PRIMARY_FALLING;
+	prevSignal = TriggerEvent::PrimaryFalling;
 	startOfCycleNt = {};
 
 	resetCurrentCycleState();
@@ -79,7 +79,7 @@ void TriggerDecoderBase::resetState() {
 
 void TriggerDecoderBase::setTriggerErrorState() {
 	m_timeSinceDecodeError.reset();
-	totalTriggerErrorCounter++;
+	triggerErrorCounter++;
 }
 
 void TriggerDecoderBase::resetCurrentCycleState() {
@@ -275,15 +275,15 @@ void PrimaryTriggerDecoder::onTooManyTeeth(int /*actual*/, int /*expected*/) {
 		currentCycle.eventCount[1]);
 }
 
-const char *getTrigger_event_e(trigger_event_e value){
+const char *getTriggerEvent(TriggerEvent value){
 switch(value) {
-case SHAFT_PRIMARY_FALLING:
+case TriggerEvent::PrimaryFalling:
   return "SHAFT_PRIMARY_FALLING";
-case SHAFT_PRIMARY_RISING:
+case TriggerEvent::PrimaryRising:
   return "SHAFT_PRIMARY_RISING";
-case SHAFT_SECONDARY_FALLING:
+case TriggerEvent::SecondaryFalling:
   return "SHAFT_SECONDARY_FALLING";
-case SHAFT_SECONDARY_RISING:
+case TriggerEvent::SecondaryRising:
   return "SHAFT_SECONDARY_RISING";
   }
  return NULL;
@@ -360,6 +360,14 @@ static bool shouldConsiderEdge(const TriggerWaveform& triggerShape, TriggerWheel
 	return false;
 }
 
+void TriggerDecoderBase::logEdgeCounters(bool isRising) {
+	if (isRising) {
+		edgeCountRise++;
+	} else {
+		edgeCountFall++;
+	}
+}
+
 /**
  * @brief Trigger decoding happens here
  * VR falls are filtered out and some VR noise detection happens prior to invoking this method, for
@@ -373,7 +381,7 @@ expected<TriggerDecodeResult> TriggerDecoderBase::decodeTriggerEvent(
 		const TriggerWaveform& triggerShape,
 		TriggerStateListener* triggerStateListener,
 		const TriggerConfiguration& triggerConfiguration,
-		const trigger_event_e signal,
+		const TriggerEvent signal,
 		const efitick_t nowNt) {
 	ScopePerf perf(PE::DecodeTriggerEvent);
 	
@@ -390,10 +398,8 @@ expected<TriggerDecodeResult> TriggerDecoderBase::decodeTriggerEvent(
 
 	bool useOnlyRisingEdgeForTrigger = triggerShape.useOnlyRisingEdges;
 
-	efiAssert(ObdCode::CUSTOM_TRIGGER_UNEXPECTED, signal <= SHAFT_SECONDARY_RISING, "unexpected signal", unexpected);
-
-	TriggerWheel triggerWheel = eventIndex[signal];
-	bool isRising = eventType[signal];
+	TriggerWheel triggerWheel = eventIndex[(int)signal];
+	bool isRising = eventType[(int)signal];
 
 	// Check that we didn't get the same edge twice in a row - that should be impossible
 	if (!useOnlyRisingEdgeForTrigger && prevSignal == signal) {
@@ -403,6 +409,8 @@ expected<TriggerDecodeResult> TriggerDecoderBase::decodeTriggerEvent(
 	prevSignal = signal;
 
 	currentCycle.eventCount[(int)triggerWheel]++;
+
+	logEdgeCounters(isRising);
 
 	if (toothed_previous_time > nowNt) {
 		firmwareError(ObdCode::CUSTOM_OBD_93, "[%s] toothed_previous_time after nowNt prev=%lu now=%lu", msg, (uint32_t)toothed_previous_time, (uint32_t)nowNt);
@@ -422,7 +430,7 @@ expected<TriggerDecodeResult> TriggerDecoderBase::decodeTriggerEvent(
 		if (printTriggerTrace) {
 			printf("%s isLessImportant %s now=%d index=%d\r\n",
 					getTrigger_type_e(triggerConfiguration.TriggerType.type),
-					getTrigger_event_e(signal),
+					getTriggerEvent(signal),
 					(int)nowNt,
 					currentCycle.current_index);
 		}
@@ -435,7 +443,7 @@ expected<TriggerDecodeResult> TriggerDecoderBase::decodeTriggerEvent(
 		if (printTriggerTrace) {
 			printf("%s event %s %lld\r\n",
 					getTrigger_type_e(triggerConfiguration.TriggerType.type),
-					getTrigger_event_e(signal),
+					getTriggerEvent(signal),
 					nowNt.count);
 			printf("decodeTriggerEvent ratio %.2f: current=%d previous=%d\r\n", 1.0 * toothDurations[0] / toothDurations[1],
 					toothDurations[0], toothDurations[1]);
@@ -538,7 +546,7 @@ expected<TriggerDecodeResult> TriggerDecoderBase::decodeTriggerEvent(
 			printf("decodeTriggerEvent %s isSynchronizationPoint=%d index=%d %s\r\n",
 					getTrigger_type_e(triggerConfiguration.TriggerType.type),
 					isSynchronizationPoint, currentCycle.current_index,
-					getTrigger_event_e(signal));
+					getTriggerEvent(signal));
 		}
 #endif /* EFI_UNIT_TEST */
 

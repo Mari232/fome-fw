@@ -12,7 +12,7 @@
 #include "trigger_state_primary_generated.h"
 #include "timer.h"
 
-const char *getTrigger_event_e(trigger_event_e value);
+const char *getTriggerEvent(TriggerEvent value);
 
 struct TriggerStateListener {
 #if EFI_SHAFT_POSITION_INPUT
@@ -109,8 +109,10 @@ public:
 			const TriggerWaveform& triggerShape,
 			TriggerStateListener* triggerStateListener,
 			const TriggerConfiguration& triggerConfiguration,
-			const trigger_event_e signal,
+			const TriggerEvent signal,
 			const efitick_t nowNt);
+
+	void logEdgeCounters(bool isRising);
 
 	void onShaftSynchronization(
 			bool wasSynchronized,
@@ -141,7 +143,6 @@ public:
 	/**
 	 * how many times since ECU reboot we had unexpected number of teeth in trigger cycle
 	 */
-	uint32_t totalTriggerErrorCounter;
 	uint32_t orderingErrorCounter;
 
 	virtual void resetState();
@@ -181,7 +182,7 @@ private:
 
 	bool validateEventCounters(const TriggerWaveform& triggerShape) const;
 
-	trigger_event_e prevSignal;
+	TriggerEvent prevSignal;
 	int64_t totalEventCountBase;
 
 	bool isFirstEvent;

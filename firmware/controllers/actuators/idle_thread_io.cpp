@@ -64,8 +64,6 @@ void startPedalPins() {
 
 	startInputPinIfValid("clutch up switch", engineConfiguration->clutchUpPin, engineConfiguration->clutchUpPinMode);
 
-	startInputPinIfValid("throttle pedal up switch", engineConfiguration->throttlePedalUpPin, engineConfiguration->throttlePedalUpPinMode);
-
 	startInputPinIfValid("brake pedal switch", engineConfiguration->brakePedalPin, engineConfiguration->brakePedalPinMode);
 	startInputPinIfValid("Launch Button", engineConfiguration->launchActivatePin, engineConfiguration->launchActivatePinMode);
 	startInputPinIfValid("Antilag Button", engineConfiguration->ALSActivatePin, engineConfiguration->ALSActivatePinMode);
@@ -75,7 +73,6 @@ void startPedalPins() {
 void stopPedalPins() {
 	brain_pin_markUnused(activeConfiguration.clutchUpPin);
 	brain_pin_markUnused(activeConfiguration.clutchDownPin);
-	brain_pin_markUnused(activeConfiguration.throttlePedalUpPin);
 	brain_pin_markUnused(activeConfiguration.brakePedalPin);
 	brain_pin_markUnused(activeConfiguration.launchActivatePin);
 }
@@ -156,8 +153,7 @@ void startIdleThread() {
 	initIdleHardware();
 #endif /* EFI_UNIT_TEST */
 
-	controller->idleState = INIT;
-	controller->baseIdlePosition = -100.0f;
+	controller->openLoop = -100.0f;
 	controller->currentIdlePosition = -100.0f;
 
 #if ! EFI_UNIT_TEST

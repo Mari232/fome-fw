@@ -43,7 +43,6 @@
 #include "fuel_math.h"
 #include "main_trigger_callback.h"
 #include "spark_logic.h"
-#include "idle_thread.h"
 #include "gitversion.h"
 #include "can_hw.h"
 #include "periodic_thread_controller.h"
@@ -457,8 +456,6 @@ static void updateFlags() {
 #endif // EFI_USB_SERIAL
 
 	engine->outputChannels.isMainRelayOn = enginePins.mainRelay.getLogicValue();
-	engine->outputChannels.isFanOn = enginePins.fanRelay.getLogicValue();
-	engine->outputChannels.isFan2On = enginePins.fanRelay2.getLogicValue();
 	engine->outputChannels.isO2HeaterOn = enginePins.o2heater.getLogicValue();
 	// todo: eliminate state copy logic by giving DfcoController it's owm xxx.txt and leveraging LiveData
 	engine->outputChannels.dfcoActive = engine->module<DfcoController>()->cutFuel();
@@ -518,8 +515,6 @@ void updateTunerStudioState() {
 	tsOutputChannels->mafMeasured = Sensor::getOrZero(SensorType::Maf);
 	tsOutputChannels->mafMeasured2 = Sensor::getOrZero(SensorType::Maf2);
 	tsOutputChannels->mafEstimate = engine->engineState.airflowEstimate;
-
-	tsOutputChannels->totalTriggerErrorCounter = engine->triggerCentral.triggerState.totalTriggerErrorCounter;
 
 	tsOutputChannels->orderingErrorCounter = engine->triggerCentral.triggerState.orderingErrorCounter;
 #endif // EFI_SHAFT_POSITION_INPUT
@@ -591,14 +586,6 @@ void updateTunerStudioState() {
 
 #if EFI_SHAFT_POSITION_INPUT
 	tsOutputChannels->maxTriggerReentrant = maxTriggerReentrant;
-	tsOutputChannels->triggerPrimaryFall = engine->triggerCentral.getHwEventCounter((int)SHAFT_PRIMARY_FALLING);
-	tsOutputChannels->triggerPrimaryRise = engine->triggerCentral.getHwEventCounter((int)SHAFT_PRIMARY_RISING);
-
-	tsOutputChannels->triggerSecondaryFall = engine->triggerCentral.getHwEventCounter((int)SHAFT_SECONDARY_FALLING);
-	tsOutputChannels->triggerSecondaryRise = engine->triggerCentral.getHwEventCounter((int)SHAFT_SECONDARY_RISING);
-
-	tsOutputChannels->triggerVvtRise = engine->triggerCentral.vvtEventRiseCounter[0];
-	tsOutputChannels->triggerVvtFall = engine->triggerCentral.vvtEventFallCounter[0];
 #endif // EFI_SHAFT_POSITION_INPUT
 
 #if HAL_USE_PAL && EFI_PROD_CODE
