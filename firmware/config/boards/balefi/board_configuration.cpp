@@ -27,12 +27,14 @@ static void setIgnitionPins() {
 // #endif // DIAG_5VP_PIN
 // }
 
+ 
+
 static void setupVbatt() {
 	// 2.7k high side/2.7k low side = 2 ratio divider
 	engineConfiguration->analogInputDividerCoefficient = 2.0f; // TBD  - check on dev board
 	
 	// 6.34k high side/ 1k low side
-	engineConfiguration->vbattDividerCoeff = (6.34 + 1) / 1; //TBD
+	engineConfiguration->vbattDividerCoeff = ((33.0 + 4.7) / 4.7)*2; //TBD
 
 	// Battery sense
 	engineConfiguration->vbattAdcChannel = EFI_ADC_4;
@@ -103,7 +105,7 @@ void setBoardDefaultConfiguration() {
 	engineConfiguration->tps1_1AdcChannel = EFI_ADC_13;
 	engineConfiguration->tps1_2AdcChannel = EFI_ADC_12;
 	engineConfiguration->map.sensor.hwChannel = EFI_ADC_3;
-
+	engineConfiguration->ignitionKeyDigitalPin = Gpio::E15;
 	
 
 	setPPSInputs(EFI_ADC_1, EFI_ADC_0);
